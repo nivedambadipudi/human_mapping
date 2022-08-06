@@ -17,28 +17,18 @@ img_size = 3000
 
 
 def resize_img(img):
-    return cv2.resize(img, [img_size, img_size], interpolation=cv2.INTER_CUBIC).astype(np.uint8)
+    return cv2.resize(img, [img_size, img_size])
 
 
-def rle2mask(image_id, shape=(img_size, img_size)):
-	row = train.loc[train['id'] == image_id].squeeze()
-
-	s = row['rle'].split()
-
+def rle2mask(mask_rle, shape=(img_size, img_size)):
+	s = mask_rle.split()
 	starts, lengths = [np.asarray(x, dtype=int) for x in (s[0:][::2], s[1:][::2])]
 	starts -= 1
 	ends = starts + lengths
-
-	mask = np.zeros(shape=[shape[0] * shape[1]], dtype=np.uint8)
-
+	img = np.zeros(shape[0]*shape[1], dtype=np.uint8)
 	for lo, hi in zip(starts, ends):
-		mask[lo : hi] = 1
-
-	mask = mask.reshape(shape).T
-	mask = resize_img(mask)
-	mask = np.expand_dims(mask, axis=2)
-
-	return mask
+	    img[lo:hi] = 1
+	return img.reshape(shape).T
 
 def mask2rle(img):
 
@@ -90,24 +80,6 @@ def show_image_and_masks(rows=4, cols=3):
     fig.subplots_adjust(wspace=0.10)
     plt.show()
 
-'''
-image_gen = ImageDataGenerator(rescale=1/255)
-
-train = image_gen.flow_from_directory(
-		train_path,
-		target_size=(img_height, img_width),
-		color_mode='grayscale',
-		batch_size=64,
-	)
-
-test = test_data_gen.flow_from_directory(
-		mask_path,
-		target_size=(img_height, img_width),
-		color_mode='grayscale',
-		batch_size=1
-	)
-'''
-
 def maskexport():
 	image_ids = train['id']
 	for image_id in image_ids:
@@ -115,9 +87,15 @@ def maskexport():
 		img = plt.imshow(mask)
 		plt.axis(False)
 		plt.savefig(f'E:/machine_learning/HumanHacking_project/masks/{image_id}.jpg', bbox_inches='tight', pad_inches=0)
+		
 
-
-mask = rle2mask(1229)
-img = plt.imshow(mask)
-plt.axis(False)
-plt.savefig(f'E:/machine_learning/HumanHacking_project/{image_id}.jpg', bbox_inches='tight', pad_inches=0)
+def specialexport():
+	img_ids = [1229, 2344, 2668, 5102, 5317, 6794, 9450, 9769, 11645,
+	12784, 14396, 14756, 15860, 16149, 17455, 18121, 18777, 21112,
+	23760, 28318, 28622, 28657, 28748, 28963, 29296]
+	for img_id in img_ids:
+		mask_1 = rle2mask(train[train["id"]==img_id]["rle"].iloc[-1], 
+			(train[train["id"]==img_id]["img_height"].iloc[-1], train[train["id"]==img_id]["img_width"].iloc[-1]))
+		plt.imshow(mask_1)
+		plt.axis(False)
+		plt.savefig(f'E:/machine_learning/HumanHacking_project/masks/{img_id}.jpg', bbox_inches='tight', pad_inches=0)
